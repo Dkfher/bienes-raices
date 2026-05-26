@@ -22,8 +22,16 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "csurf": "^1.11.0",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "pug": "^3.0.4"
+    "express-validator": "^7.3.2",
+    "mysql2": "^3.22.3",
+    "nodemailer": "^8.0.8",
+    "pug": "^3.0.4",
+    "sequelize": "^6.37.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.0",
