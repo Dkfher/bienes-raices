@@ -1,8 +1,8 @@
 import Usuario from "../models/Usuario.js";
 import { check, validationResult } from "express-validator";
 import { generatedId } from "../helpers/tokens.js";
-import { emailRegistro } from "../helpers/emails.js";
-import { where } from "sequelize";
+import { emailRegistro, emailForgotPassword } from "../helpers/emails.js";
+import bcrypt from "bcrypt";
 
 const formularioLogin = (req, res) => {
   res.render("auth/login", {
@@ -11,8 +11,6 @@ const formularioLogin = (req, res) => {
 };
 
 const formularioRegistro = (req, res) => {
-  console.log(req.csrfToken());
-
   res.render("auth/registro", {
     pagina: "Crear Cuenta",
     csrfToken: req.csrfToken(),
@@ -22,6 +20,116 @@ const formularioRegistro = (req, res) => {
 const formularioForgotPassword = (req, res) => {
   res.render("auth/forgot-password", {
     pagina: "Recupera tu acceso a Bienes Raices",
+    csrfToken: req.csrfToken(),
+  });
+};
+
+const resetPassword = async (req, res) => {
+  //Validación de campos
+  await check("email")
+    .notEmpty()
+    .withMessage("El email no puede ir vacío")
+    .isEmail()
+    .withMessage("El email no es válido")
+    .run(req);
+
+  // Verificar si hay errores
+  let resultado = validationResult(req);
+
+  if (!resultado.isEmpty()) {
+    // Si hay errores, regresa a la vista con los errores
+    return res.render("auth/forgot-password", {
+      pagina: "Recupera tu acceso a Bienes Raices",
+      csrfToken: req.csrfToken(),
+      errores: resultado.array(),
+    });
+  }
+
+  //Busca el usuario
+  const { email } = req.body;
+  const usuario = await Usuario.findOne({ where: { email } });
+
+  if (!usuario) {
+    return res.render("auth/forgot-password", {
+      pagina: "Recupera tu acceso a Bienes Raices",
+      csrfToken: req.csrfToken(),
+      errores: [{ msg: "El email no pertenece a ningun usuario" }],
+    });
+  }
+
+  //Generar token y enviar email
+  usuario.token = generatedId();
+  await usuario.save();
+  //Enviar email
+  emailForgotPassword({
+    email: usuario.email,
+    nombre: usuario.nombre,
+    token: usuario.token,
+  });
+
+  // Renderizar un mensaje
+  res.render("templates/mensaje", {
+    pagina: "Reestablece tu Password ",
+    mensaje: "Hemos enviado un email con las instrucciones",
+  });
+};
+
+const comprobarToken = async (req, res) => {
+  const { token } = req.params;
+  const usuario = await Usuario.findOne({ where: { token } });
+
+  if (!usuario) {
+    return res.render("auth/confirmar-cuenta", {
+      pagina: "Reestablece tu Password ",
+      mensaje: "Hubo un error al validar tu información, intenta de nuevo",
+      error: true,
+    });
+  }
+
+  //Muestra formulario para modificar el password
+  res.render("auth/reset-password", {
+    pagina: "Reestablece tu Password",
+    csrfToken: req.csrfToken(),
+  });
+};
+
+const nuevoPassword = async (req, res) => {
+  //Valida el password
+  await check("password")
+    .notEmpty()
+    .withMessage("El password no puede ir vacío")
+    .isLength({ min: 6 })
+    .withMessage("El password debe tener mínimo 6 caracteres")
+    .run(req);
+
+  // Verificar si hay errores
+  let resultado = validationResult(req);
+
+  if (!resultado.isEmpty()) {
+    // Si hay errores, regresa a la vista con los errores
+    return res.render("auth/reset-password", {
+      pagina: "Reestablece tu Password",
+      csrfToken: req.csrfToken(),
+      errores: resultado.array(),
+    });
+  }
+
+  const { token } = req.params;
+  const { password } = req.body;
+
+  //Identifica quien hace el password
+  const usuario = await Usuario.findOne({ where: { token } });
+
+  //Hashear el nuevo password
+  const salt = await bcrypt.genSalt(10);
+  usuario.password = await bcrypt.hash(password, salt);
+  usuario.token = null;
+
+  await usuario.save();
+
+  res.render("auth/confirmar-cuenta", {
+    pagina: "Password Reestablecido",
+    mensaje: "El password se guardo correctamente",
   });
 };
 
@@ -140,4 +248,7 @@ export {
   formularioForgotPassword,
   registrar,
   confirmar,
+  resetPassword,
+  comprobarToken,
+  nuevoPassword,
 };
