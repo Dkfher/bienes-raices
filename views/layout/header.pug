@@ -1,0 +1,42 @@
+//- header.bg-indigo-600.p-4
+//-     .container.mx-auto.flex.justify-between.items-center
+//-                h1.text-2xl.text-white.font-extrabold.text-center Bienes
+//-                  span.font-normal Raices
+
+//-                nav(class="my-5 text-sm md:flex md:items-center md:gap-3 font-bold text-white hidden ")
+//-                  a(href="") Mis Propiedades
+//-                  a(href="") Mi Perfil
+//-                  a( class="bg-indigo-800 py-2 px-10 rounded-lg" href="") Cerrar Sesión
+
+
+header.bg-indigo-600.p-4
+  .container.mx-auto
+    .flex.justify-between.items-center
+      h1.text-2xl.text-white.font-extrabold Bienes
+        span.font-normal Raices
+
+      //- Botón hamburguesa (solo visible en móvil)
+      button#menu-toggle(type="button" class="text-white md:hidden")
+        svg(xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor")
+          path(stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16")
+
+      //- Nav desktop
+      nav(class="hidden md:flex md:items-center md:gap-3 font-bold text-white text-sm")
+        a(href="") Mis Propiedades
+        a(href="") Mi Perfil
+        a.bg-indigo-800.py-2.px-10.rounded-lg(href="") Cerrar Sesión
+
+    //- Nav móvil (se despliega debajo)
+    nav#mobile-menu(class="hidden flex-col gap-3 font-bold text-white text-sm mt-4 pb-2")
+      a(href="") Mis Propiedades
+      a(href="") Mi Perfil
+      a.bg-indigo-800.py-2.px-4.rounded-lg.text-center(href="") Cerrar Sesión
+
+script.
+  const toggle = document.getElementById('menu-toggle');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  toggle.addEventListener('click', () => {
+    mobileMenu.classList.toggle('hidden');
+    mobileMenu.classList.toggle('flex');
+  });
